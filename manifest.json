@@ -1,0 +1,24 @@
+{
+    "name": "SecureGuard",
+    "short_name": "SecureGuard",
+    "description": "Advanced Security System - Pattern Lock with Silent Capture",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#0a0e27",
+    "theme_color": "#00d4ff",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>???</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "permissions": [
+        "camera",
+        "microphone",
+        "geolocation",
+        "notifications",
+        "storage"
+    ]
+}

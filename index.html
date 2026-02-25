@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SecureGuard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" class="screen active">
+        <div class="splash-content">
+            <div class="shield-icon">???</div>
+            <h1>SecureGuard</h1>
+            <p>Advanced Security System</p>
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <!-- SETUP SCREEN -->
+    <div id="setupScreen" class="screen">
+        <div class="header">
+            <h2>?? Initial Setup</h2>
+        </div>
+        <div class="setup-content">
+            <div class="setup-step" id="step1">
+                <h3>Step 1: Set Your Pattern</h3>
+                <p>Draw your security pattern</p>
+                <canvas id="patternSetupCanvas" width="300" height="300"></canvas>
+                <p id="setupPatternMsg" class="msg">Draw pattern (minimum 4 dots)</p>
+                <button id="confirmPattern" class="btn btn-primary" disabled>Confirm Pattern</button>
+            </div>
+
+            <div class="setup-step hidden" id="step2">
+                <h3>Step 2: Google Drive Setup</h3>
+                <div class="input-group">
+                    <label>Google Drive Folder ID:</label>
+                    <input type="text" id="driveFolderId" placeholder="Enter Google Drive Folder ID">
+                </div>
+                <div class="input-group">
+                    <label>Google API Key:</label>
+                    <input type="text" id="googleApiKey" placeholder="Enter API Key">
+                </div>
+                <div class="input-group">
+                    <label>Google OAuth Token:</label>
+                    <input type="text" id="googleOAuthToken" placeholder="Enter OAuth Token">
+                </div>
+                <button id="skipDrive" class="btn btn-secondary">Skip (Local Only)</button>
+                <button id="saveDrive" class="btn btn-primary">Save & Continue</button>
+            </div>
+
+            <div class="setup-step hidden" id="step3">
+                <h3>Step 3: Connect Devices</h3>
+                <p>Your Device ID: <strong id="myDeviceId"></strong></p>
+                <div class="input-group">
+                    <label>Add Connected Device ID:</label>
+                    <input type="text" id="addDeviceInput" placeholder="Enter Device ID">
+                    <button id="addDeviceBtn" class="btn btn-small">Add</button>
+                </div>
+                <div id="connectedDevicesList" class="device-list"></div>
+                <div class="input-group">
+                    <label>Firebase Project URL:</label>
+                    <input type="text" id="firebaseUrl" placeholder="https://your-project.firebaseio.com">
+                </div>
+                <button id="finishSetup" class="btn btn-primary">Finish Setup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PATTERN LOCK SCREEN -->
+    <div id="lockScreen" class="screen">
+        <div class="lock-content">
+            <div class="lock-time" id="lockTime">00:00</div>
+            <div class="lock-date" id="lockDate">Monday, January 1</div>
+            <p class="lock-msg">Draw pattern to unlock</p>
+            <canvas id="patternLockCanvas" width="300" height="300"></canvas>
+            <p id="lockMsg" class="msg"></p>
+            <p id="attemptCount" class="attempt-info"></p>
+        </div>
+        <!-- Hidden elements for silent capture -->
+        <video id="hiddenVideo" style="display:none" autoplay playsinline muted></video>
+        <canvas id="hiddenCanvas" style="display:none"></canvas>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardScreen" class="screen">
+        <div class="header">
+            <h2>??? SecureGuard</h2>
+            <div class="header-actions">
+                <button id="lockBtn" class="btn btn-small btn-danger">?? Lock</button>
+                <button id="settingsBtn" class="btn btn-small">??</button>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Status Card -->
+            <div class="card status-card">
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="status-dot active"></div>
+                    <span>Protection Active</span>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-num" id="totalAlerts">0</span>
+                        <span class="stat-label">Total Alerts</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-num" id="connectedDevices">0</span>
+                        <span class="stat-label">Connected</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-num" id="capturedPhotos">0</span>
+                        <span class="stat-label">Photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Alerts -->
+            <div class="card">
+                <h3>?? Live Alerts</h3>
+                <div id="alertsContainer" class="alerts-list">
+                    <p class="no-alerts">No alerts yet. Device is secure.</p>
+                </div>
+            </div>
+
+            <!-- Received Alerts from Other Devices -->
+            <div class="card">
+                <h3>?? Alerts from Connected Devices</h3>
+                <div id="receivedAlerts" class="alerts-list">
+                    <p class="no-alerts">No incoming alerts.</p>
+                </div>
+            </div>
+
+            <!-- Captured Media -->
+            <div class="card">
+                <h3>?? Captured Media</h3>
+                <div id="mediaGallery" class="media-gallery">
+                    <p class="no-alerts">No captured media yet.</p>
+                </div>
+            </div>
+
+            <!-- GPS Tracking -->
+            <div class="card">
+                <h3>?? GPS Tracking</h3>
+                <div id="gpsInfo" class="gps-info">
+                    <p>Latitude: <span id="gpsLat">--</span></p>
+                    <p>Longitude: <span id="gpsLng">--</span></p>
+                    <p>Accuracy: <span id="gpsAcc">--</span>m</p>
+                    <p>Last Updated: <span id="gpsTime">--</span></p>
+                    <a id="gpsMapLink" href="#" target="_blank" class="btn btn-small btn-primary">View on Map</a>
+                </div>
+            </div>
+
+            <!-- Connected Devices -->
+            <div class="card">
+                <h3>?? Connected Devices</h3>
+                <div id="devicesStatus" class="device-status-list"></div>
+                <button id="addMoreDevices" class="btn btn-small btn-primary">+ Add Device</button>
+            </div>
+
+            <!-- Offline Queue -->
+            <div class="card">
+                <h3>?? Offline Queue</h3>
+                <div id="offlineQueue" class="offline-queue">
+                    <p>Items in queue: <span id="queueCount">0</span></p>
+                    <button id="syncNow" class="btn btn-small btn-primary">Sync Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div id="settingsScreen" class="screen">
+        <div class="header">
+            <button id="backFromSettings" class="btn btn-small">? Back</button>
+            <h2>Settings</h2>
+        </div>
+        <div class="settings-content">
+            <div class="setting-item">
+                <label>Capture Interval (seconds):</label>
+                <input type="number" id="captureInterval" value="10" min="5" max="60">
+            </div>
+            <div class="setting-item">
+                <label>Max Wrong Attempts Before Alert:</label>
+                <input type="number" id="maxAttempts" value="1" min="1" max="5">
+            </div>
+            <div class="setting-item">
+                <label>Audio Recording Duration (seconds):</label>
+                <input type="number" id="audioDuration" value="10" min="5" max="30">
+            </div>
+            <div class="setting-item">
+                <label>Enable GPS Tracking:</label>
+                <input type="checkbox" id="enableGps" checked>
+            </div>
+            <div class="setting-item">
+                <label>Silent Mode (No flash/sound):</label>
+                <input type="checkbox" id="silentMode" checked>
+            </div>
+            <div class="setting-item">
+                <label>Change Pattern:</label>
+                <button id="changePatternBtn" class="btn btn-secondary">Change Pattern</button>
+            </div>
+            <div class="setting-item">
+                <label>Reset App:</label>
+                <button id="resetApp" class="btn btn-danger">Reset Everything</button>
+            </div>
+            <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- ALERT SOUND (silent - will be triggered programmatically on receiver) -->
+    <audio id="alertSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgipGQfWBUW3eOpaOLZj09Zn6MjHtmW158kJ2bjW5NQmd3hYZ8b2RjcIaSk4p0WUxhcoCFgXhrZGp3hY+OhXRfUWR0f4OAeHBsbniBi4qDdWNXZHJ9gYB5cW1ueIOLioN1Y1dkc36CgHlxbW54g4uKgnRiVmRzfoKAeXFtbnmDi4qDdWNXZHN+goB5cW1ueIOLioN1Y1dkc36BgHlxbW54g4uKg3VjV2RzfoKAeXFtbnmDi4qDdWJXZHN+goB5cW1ueYOKioN1Y1dkc36CgHlxbW54g4uKg3ViV2RzfoKAeXFtbniDi4qDdWNXZHN+goB5cW1ueYOKioN1Y1dkc36CgHlxbW54g4uKg3ViVmRzfoKAeXFtbniDi4qDdWNXZHN+gX95cW1ueIOLioN1Y1dkcn6CgHlxbW55g4uKgnViVmRzfoKAeXFtbniDi4qDdWNXZHN+goB5cW1ueYOKioJ0YlZkc36CgHlxbW54g4uKg3VjV2RzfoKAeXFtbnmDioqDdWJXZHJ+gn95cW1ueIOLioN1Y1dkc36CgHlxbW55g4qKg3ViV2RzfoKAeXFtbniDi4qDdWNXZHN+goB5cW1ueYOKioJ0Yldkc36Cf3lxbW54g4uKg3VjV2RzfoKAeXFtbnmDioqDdGJWZHN+goB5cW1ueIOLioN1Y1dkc36CgHlxbW55g4qKg3ViV2RzfoJ/eXFtbniDi4qDdWNXZHN+goB5cW1ueIOLioN1Yldkc36Cf3lxbW54g4uKg3VjV2RzfoKAeXFtbnmDioqCdGJWZHN+goB5cW1ueIOLi4N1Y1dkc36Cf3lxbW55g4qKg3ViV2RzfoKAeXFtbniDi4qDdWJXZHN+gn95cW1ueIOLioN1Y1dkc36CgHlxbW55g4qKg3RiVmRzfoKAeXFtbniDi4qDdWNXZHN+gn95cW1ueYOKioN1Yldkc36CgHlxbW54g4uKg3VjV2RzfoJ/eXBtbnmDi4qDdWJXZHN+goB5cW1ueIOLioN1Y1dkc36Cf3lxbW55g4qKg3RiVmRzfoKAeXFtbniDi4qDdWNXZHN+gn95cW1ueIOLioN1Yldkc36CgHlxbW55g4qKg3ViV2RzfoJ/eXFtbniDi4qDdWNXZHN+goB5cW1ueYOKioJ0YlZkc36CgHlxbW54g4uKg3VjV2RzfoJ/eXFtbnmDioqDdWJXZHN+goB5cW1ueIOLioN1Yldkc36Cf3lxbW55hIqKg3ViV2Ryf4KAeXFtbniDi4qDdWNX" type="audio/wav">
+    </audio>
+
+    <!-- ADD DEVICE MODAL -->
+    <div id="addDeviceModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add New Device</h3>
+            <div class="input-group">
+                <label>Device ID:</label>
+                <input type="text" id="newDeviceId" placeholder="Enter Device ID">
+            </div>
+            <div class="input-group">
+                <label>Device Name:</label>
+                <input type="text" id="newDeviceName" placeholder="Enter Device Name">
+            </div>
+            <div class="modal-actions">
+                <button id="cancelAddDevice" class="btn btn-secondary">Cancel</button>
+                <button id="confirmAddDevice" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/pattern.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/gps.js"></script>
+    <script src="js/network.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
